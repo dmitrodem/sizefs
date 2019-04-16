@@ -46,36 +46,38 @@ class SizeFS(Fuse):
     def lookup_path(db, path):
         if (path == ['']) or (path == []):
             return db
-        for e in db:
-            if e['cell'] == path[0]:
-                return SizeFS.lookup_path(e['children'], path[1:])
+        return SizeFS.lookup_path(db[path[0]], path[1:])
 
     def getattr(self, path):
         st = MyStat()
-        if path == '/':
+        if path == os.path.sep:
             st.st_mode = stat.S_IFDIR | 0o755
             st.st_nlink = 2
             return st
 
-        path = path.split('/')[1:]
-        db = SizeFS.lookup_path(self.db, path[:-1])
-        for e in db:
-            if e['cell'] == path[-1]:
-                try:
-                    st.st_size = int(float(e['area']))
-                    st.st_mode = stat.S_IFREG | 0o644
-                    st.st_nlink = 1
-                except KeyError:
-                    st.st_mode = stat.S_IFDIR | 0o755
-                    st.st_nlink = 1
-                return st
+        path = path.split(os.path.sep)[1:]
+
+        try:
+            content = SizeFS.lookup_path(self.db, path)
+        except KeyError:
+            return -errno.ENOENT
+
+        if isinstance(content, float):
+            # 1 GB (1e9 B) = 1 mm^2
+            st.st_size = round(content*1000)
+            st.st_mode = stat.S_IFREG | 0o644
+            st.st_nlink = 1
+            return st
+        elif isinstance(content, dict):
+            st.st_mode = stat.S_IFDIR | 0o755
+            st.st_nlink = 1
+            return st
 
         return -errno.ENOENT
 
     def readdir(self, path, offset):
-        path = path.split('/')[1:]
-        dirs = [".", ".."] + [e['cell'] for e in SizeFS.lookup_path(self.db, path)]
-        for r in dirs:
+        path = path.split(os.path.sep)[1:]
+        for r in SizeFS.lookup_path(self.db, path).keys():
             yield fuse.Direntry(r)
 
 

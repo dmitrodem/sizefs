@@ -10,12 +10,12 @@ proc dump_hierarchy { root } {
         set cell [get_object_name $c]
         set base_cell [lindex [split $cell /] end]
         if { [get_attribute $c is_hierarchical] } {
-            lappend result [format "{\"cell\": \"%s\", \"children\": %s}" ${base_cell} [dump_hierarchy ${cell}]]
+            lappend result [format "\"%s\": %s" ${base_cell} [dump_hierarchy ${cell}]]
         } {
             set area [get_attribute $c area]
-            lappend result [format "{\"cell\": \"%s\", \"area\": \"%s\"}" ${base_cell} ${area}]
+            lappend result [format "\"%s\": %s" ${base_cell} ${area}]
         }
     }
-    return [format "\[%s\]" [join $result ", "]]
+    return [format "\{%s\}" [join $result ", "]]
 }
 redirect -f output.json { dump_hierarchy "" }
