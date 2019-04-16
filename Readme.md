@@ -6,3 +6,4 @@ Size-only filesystem for analyzing relative area occupied by various cores in de
 2. Run `sizefs.py <output.json.gz> <mountpount>` to mount FUSE filesystem
 3. Use any disk usage software (`du`, `xdiskusage`, `filelight` etc.) to view to result.
 
+![](example.png)
